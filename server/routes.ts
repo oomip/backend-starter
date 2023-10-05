@@ -2,7 +2,14 @@ import { ObjectId } from "mongodb";
 
 import { Router, getExpressRouter } from "./framework/router";
 
-import { Friend, Post, User, WebSession } from "./app";
+import { Activity, Chatroom, Gathering, Group, Location, Message, Post, User, WebSession } from "./app";
+import { ActivityDoc } from "./concepts/activity";
+import { ChatroomDoc } from "./concepts/chatroom";
+// import { FriendDoc } from "./concepts/friend";
+import { GatheringDoc } from "./concepts/gathering";
+import { GroupDoc } from "./concepts/group";
+import { LocationDoc } from "./concepts/location";
+import { MessageDoc } from "./concepts/message";
 import { PostDoc, PostOptions } from "./concepts/post";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
@@ -15,6 +22,7 @@ class Routes {
     return await User.getUserById(user);
   }
 
+  // Users CRUD
   @Router.get("/users")
   async getUsers() {
     return await User.getUsers();
@@ -44,6 +52,7 @@ class Routes {
     return await User.delete(user);
   }
 
+  // WebSession
   @Router.post("/login")
   async logIn(session: WebSessionDoc, username: string, password: string) {
     const u = await User.authenticate(username, password);
@@ -57,6 +66,7 @@ class Routes {
     return { msg: "Logged out!" };
   }
 
+  // Posts CRUD
   @Router.get("/posts")
   async getPosts(author?: string) {
     let posts;
@@ -90,52 +100,208 @@ class Routes {
     return Post.delete(_id);
   }
 
-  @Router.get("/friends")
-  async getFriends(session: WebSessionDoc) {
-    const user = WebSession.getUser(session);
-    return await User.idsToUsernames(await Friend.getFriends(user));
+  // Locations CRUD
+  @Router.get("/locations")
+  async getLocations(coordinates: [longitude: number, latitude: number]) {
+    return await Location.getLocations({ coordinates });
   }
 
-  @Router.delete("/friends/:friend")
-  async removeFriend(session: WebSessionDoc, friend: string) {
-    const user = WebSession.getUser(session);
-    const friendId = (await User.getUserByUsername(friend))._id;
-    return await Friend.removeFriend(user, friendId);
+  @Router.post("/locations")
+  async createLocation(longitude: number, latitude: number) {
+    const created = await Location.create(longitude, latitude);
+    return { msg: "Location created.", location: created };
   }
 
-  @Router.get("/friend/requests")
-  async getRequests(session: WebSessionDoc) {
-    const user = WebSession.getUser(session);
-    return await Responses.friendRequests(await Friend.getRequests(user));
+  @Router.patch("/locations/:_id")
+  async updateLocation(_id: ObjectId, update: Partial<LocationDoc>) {
+    return await Location.update(_id, update);
   }
 
-  @Router.post("/friend/requests/:to")
-  async sendFriendRequest(session: WebSessionDoc, to: string) {
-    const user = WebSession.getUser(session);
-    const toId = (await User.getUserByUsername(to))._id;
-    return await Friend.sendRequest(user, toId);
+  @Router.delete("/locations/:_id")
+  async deleteLocation(_id: ObjectId) {
+    return Location.delete(_id);
   }
 
-  @Router.delete("/friend/requests/:to")
-  async removeFriendRequest(session: WebSessionDoc, to: string) {
-    const user = WebSession.getUser(session);
-    const toId = (await User.getUserByUsername(to))._id;
-    return await Friend.removeRequest(user, toId);
+  @Router.get("/locations/:_id/nearby")
+  async getNearbyLocations(_id: ObjectId, params: { distance: number }) {
+    const meters = params.distance ?? null;
+    return Location.getNearbyLocations(_id, meters);
   }
 
-  @Router.put("/friend/accept/:from")
-  async acceptFriendRequest(session: WebSessionDoc, from: string) {
-    const user = WebSession.getUser(session);
-    const fromId = (await User.getUserByUsername(from))._id;
-    return await Friend.acceptRequest(fromId, user);
+  // Groups CRUD
+  @Router.get("/groups")
+  async getGroups(query: Partial<GroupDoc>) {
+    return await Group.getGroups(query);
   }
 
-  @Router.put("/friend/reject/:from")
-  async rejectFriendRequest(session: WebSessionDoc, from: string) {
-    const user = WebSession.getUser(session);
-    const fromId = (await User.getUserByUsername(from))._id;
-    return await Friend.rejectRequest(fromId, user);
+  @Router.post("/groups")
+  async createGroup(members: Set<ObjectId>) {
+    return await Group.create(members);
   }
+
+  @Router.patch("/groups/:_id")
+  async updateGroup(_id: ObjectId, update: Partial<GroupDoc>) {
+    return await Group.update(_id, update);
+  }
+
+  @Router.delete("/groups/:_id")
+  async deleteGroup(_id: ObjectId) {
+    return await Group.delete(_id);
+  }
+
+  // Activities CRUD
+  @Router.get("/activities")
+  async getActivities(query: Partial<ActivityDoc>) {
+    return await Activity.getActivities(query);
+  }
+
+  @Router.post("/activities")
+  async createActivity(attrs: ActivityDoc) {
+    return await Activity.create(attrs);
+  }
+
+  @Router.patch("/activities/:_id")
+  async updateActivity(_id: ObjectId, update: Partial<ActivityDoc>) {
+    return await Activity.update(_id, update);
+  }
+
+  @Router.delete("/activities/:_id")
+  async deleteActivity(_id: ObjectId) {
+    return await Activity.delete(_id);
+  }
+
+  // Messages CRUD
+  @Router.get("/messages")
+  async getMessages(session: WebSessionDoc, query: Partial<MessageDoc>) {
+    return await Message.getMessages(query);
+  }
+
+  @Router.post("/messages")
+  async createMessage(session: WebSessionDoc, content: string) {
+    const user = WebSession.getUser(session);
+    return await Message.create(content, user);
+  }
+
+  @Router.patch("/messages/:_id")
+  async updateMessage(session: WebSessionDoc, _id: ObjectId, update: Partial<MessageDoc>) {
+    const user = WebSession.getUser(session);
+    return await Message.update(_id, update, user);
+  }
+
+  @Router.delete("/messages/:_id")
+  async deleteMessage(session: WebSessionDoc, _id: ObjectId) {
+    const user = WebSession.getUser(session);
+    return await Message.delete(_id, user);
+  }
+
+  // Chatrooms CRUD
+  //   TODO: authentication
+  @Router.get("/chatrooms")
+  async getChatrooms(query: Partial<ChatroomDoc>) {
+    return await Chatroom.getChatrooms(query);
+  }
+
+  @Router.post("/chatrooms")
+  async createChatroom(attrs: ChatroomDoc) {
+    return await Chatroom.create(attrs);
+  }
+
+  @Router.patch("/chatrooms/:_id")
+  async updateChatroom(_id: ObjectId, update: Partial<ChatroomDoc>) {
+    return await Chatroom.update(_id, update);
+  }
+
+  @Router.delete("/chatrooms/:_id")
+  async deleteChatroom(_id: ObjectId) {
+    return await Chatroom.delete(_id);
+  }
+
+  // Gatherings CRUD
+  //   TODO: more authentication
+  @Router.get("/gatherings")
+  async getGatherings(query: Partial<GatheringDoc>) {
+    return await Gathering.getGatherings(query);
+  }
+
+  @Router.post("/gatherings")
+  async createGathering(attrs: GatheringDoc) {
+    return await Gathering.create(attrs);
+  }
+
+  @Router.patch("/gatherings/:_id")
+  async updateGathering(_id: ObjectId, update: Partial<GatheringDoc>) {
+    return await Gathering.update(_id, update);
+  }
+
+  @Router.delete("/gatherings/:_id")
+  async deleteGathering(_id: ObjectId) {
+    return await Gathering.delete(_id);
+  }
+
+  @Router.post("gatherings/:_id/join")
+  async joinGathering(session: WebSessionDoc, _id: ObjectId) {
+    const user = WebSession.getUser(session);
+    return await Gathering.addMember(_id, user);
+  }
+
+  @Router.post("gatherings/:_id/leave")
+  async leaveGathering(session: WebSessionDoc, _id: ObjectId) {
+    const user = WebSession.getUser(session);
+    return await Gathering.removeMember(_id, user);
+  }
+
+  @Router.post("gatherings/:_id/assign_groups")
+  async assignGroups(_id: ObjectId, attrs: ObjectId[]) {
+    const groups = Array.from(attrs);
+    return await Gathering.assignGroups(_id, groups);
+  }
+
+  // @Router.get("/friends")
+  // async getFriends(session: WebSessionDoc) {
+  //   const user = WebSession.getUser(session);
+  //   return await User.idsToUsernames(await Friend.getFriends(user));
+  // }
+
+  // @Router.delete("/friends/:friend")
+  // async removeFriend(session: WebSessionDoc, friend: string) {
+  //   const user = WebSession.getUser(session);
+  //   const friendId = (await User.getUserByUsername(friend))._id;
+  //   return await Friend.removeFriend(user, friendId);
+  // }
+
+  // @Router.get("/friend/requests")
+  // async getRequests(session: WebSessionDoc) {
+  //   const user = WebSession.getUser(session);
+  //   return await Responses.friendRequests(await Friend.getRequests(user));
+  // }
+
+  // @Router.post("/friend/requests/:to")
+  // async sendFriendRequest(session: WebSessionDoc, to: string) {
+  //   const user = WebSession.getUser(session);
+  //   const toId = (await User.getUserByUsername(to))._id;
+  //   return await Friend.sendRequest(user, toId);
+  // }
+
+  // @Router.delete("/friend/requests/:to")
+  // async removeFriendRequest(session: WebSessionDoc, to: string) {
+  //   const user = WebSession.getUser(session);
+  //   const toId = (await User.getUserByUsername(to))._id;
+  //   return await Friend.removeRequest(user, toId);
+  // }
+
+  // @Router.put("/friend/accept/:from")
+  // async acceptFriendRequest(session: WebSessionDoc, from: string) {
+  //   const user = WebSession.getUser(session);
+  //   const fromId = (await User.getUserByUsername(from))._id;
+  //   return await Friend.acceptRequest(fromId, user);
+  // }
+
+  // @Router.put("/friend/reject/:from")
+  // async rejectFriendRequest(session: WebSessionDoc, from: string) {
+  //   const user = WebSession.getUser(session);
+  //   const fromId = (await User.getUserByUsername(from))._id;
+  //   return await Friend.rejectRequest(fromId, user);
+  // }
 }
 
 export default getExpressRouter(new Routes());

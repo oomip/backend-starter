@@ -3,11 +3,11 @@ html {
 }
 
 body {
-  margin: 0 1em;
   padding: 0;
   font-family: sans-serif;
   max-height: 100vh;
-  background-color: #f1f3f5;
+  background-color: #94ebc7;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
 h1, h2 {
@@ -35,7 +35,6 @@ main {
   height: 80vh;
   width: 100%;
   overflow: auto;
-  border: 1px solid #ccc;
   padding: 1em;
 }
 
@@ -50,6 +49,9 @@ main {
   border-radius: 6px;
   padding: 1em;
   list-style: none;
+  color: #194b4b;
+  background-color: #e9fff6;
+
 }
 
 .field {
@@ -58,4 +60,5 @@ main {
 
 #response-text {
   font-family: 'Courier New', Courier, monospace;
+  color: #194b4b;
 }
