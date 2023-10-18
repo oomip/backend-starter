@@ -44,20 +44,31 @@ export default class GroupConcept {
 
   async update(_id: ObjectId, update: Partial<GroupDoc>): Promise<{ msg: string }> {
     await this.getGroupById(_id);
-    await this.groups.updateOne({ _id }, update);
+    await this.groups.updateOne({ _id }, { members: new Set(update.members) });
     return { msg: "Group updated successfully!" };
+  }
+
+  async addMember(_id: ObjectId, member: ObjectId): Promise<{ msg: string }> {
+    const group = await this.getGroupById(_id);
+    await this.groups.updateOne({ _id }, { members: new Set([member, ...group.members]) });
+    return { msg: "Group updated successfully!" };
+  }
+
+  async removeMember(_id: ObjectId, member: ObjectId): Promise<{ msg: string }> {
+    const group = await this.getGroupById(_id);
+    if (group.members.has(member)) {
+      let otherMembers;
+      [member, ...otherMembers] = group.members;
+      await this.groups.updateOne({ _id }, { members: new Set(otherMembers) });
+      return { msg: "Group updated successfully!" };
+    } else {
+      throw new NotFoundError("Group does not contain this member.");
+    }
   }
 
   async delete(_id: ObjectId): Promise<{ msg: string }> {
     await this.groups.deleteOne({ _id });
     return { msg: "Group deleted!" };
-  }
-
-  async groupExists(_id: ObjectId): Promise<void> {
-    const maybeGroup = await this.groups.readOne({ _id });
-    if (maybeGroup === null) {
-      throw new NotFoundError(`Group not found!`);
-    }
   }
 
   private async canCreate(members: Set<ObjectId>): Promise<void> {

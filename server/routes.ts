@@ -6,6 +6,7 @@ import { Activity, Chatroom, Gathering, Group, Location, Message, Post, User, We
 import { ActivityDoc } from "./concepts/activity";
 import { ChatroomDoc } from "./concepts/chatroom";
 // import { FriendDoc } from "./concepts/friend";
+import { NotAllowedError } from "./concepts/errors";
 import { GatheringDoc } from "./concepts/gathering";
 import { GroupDoc } from "./concepts/group";
 import { LocationDoc } from "./concepts/location";
@@ -131,6 +132,7 @@ class Routes {
   // Groups CRUD
   @Router.get("/groups")
   async getGroups(query: Partial<GroupDoc>) {
+    // query.members = { $elemMatch: { $eq: member } }
     return await Group.getGroups(query);
   }
 
@@ -157,6 +159,25 @@ class Routes {
 
   @Router.post("/activities")
   async createActivity(attrs: ActivityDoc) {
+    const location = await Location.getLocationbyId(attrs.location);
+    const baseUrl = "https://api.sunrise-sunset.org/json";
+
+    await fetch(
+      baseUrl +
+        new URLSearchParams({
+          lat: location.coordinates[1].toString(),
+          long: location.coordinates[0].toString(),
+        }),
+    )
+      .then((response) => response.json())
+      .then((response) => {
+        if (response.status === "OK") {
+          const sunsetTime = new Date(response.results.sunset);
+          if (attrs.date.getUTCHours() + 1 > sunsetTime.getUTCHours() && attrs.date.getUTCMinutes() > sunsetTime.getUTCMinutes() && attrs.date.getUTCSeconds() > sunsetTime.getUTCSeconds()) {
+            throw new NotAllowedError("Start time must be at least an hour before sunset!");
+          }
+        }
+      });
     return await Activity.create(attrs);
   }
 
@@ -195,7 +216,6 @@ class Routes {
   }
 
   // Chatrooms CRUD
-  //   TODO: authentication
   @Router.get("/chatrooms")
   async getChatrooms(query: Partial<ChatroomDoc>) {
     return await Chatroom.getChatrooms(query);
@@ -217,7 +237,6 @@ class Routes {
   }
 
   // Gatherings CRUD
-  //   TODO: more authentication
   @Router.get("/gatherings")
   async getGatherings(query: Partial<GatheringDoc>) {
     return await Gathering.getGatherings(query);
@@ -241,19 +260,28 @@ class Routes {
   @Router.post("gatherings/:_id/join")
   async joinGathering(session: WebSessionDoc, _id: ObjectId) {
     const user = WebSession.getUser(session);
-    return await Gathering.addMember(_id, user);
+    const gathering = await Gathering.getGatheringbyId(_id);
+    await Gathering.addMember(_id, user);
+    for (const groupId of gathering.groups) {
+      const group = await Group.getGroupById(groupId);
+      if (group.members.size == 2) {
+        // create group at 3 members
+        const newGroup = (await Group.create(group.members)).group;
+        if (newGroup !== null) {
+          await Group.addMember(newGroup._id, user);
+          await Gathering.addGroup(gathering._id, newGroup._id);
+        }
+      } else if (2 < group.members.size && group.members.size < 8) {
+        await Group.addMember(group._id, user);
+        await Gathering.addGroup(gathering._id, group._id);
+      }
+    }
   }
 
   @Router.post("gatherings/:_id/leave")
   async leaveGathering(session: WebSessionDoc, _id: ObjectId) {
     const user = WebSession.getUser(session);
     return await Gathering.removeMember(_id, user);
-  }
-
-  @Router.post("gatherings/:_id/assign_groups")
-  async assignGroups(_id: ObjectId, attrs: ObjectId[]) {
-    const groups = Array.from(attrs);
-    return await Gathering.assignGroups(_id, groups);
   }
 
   // @Router.get("/friends")

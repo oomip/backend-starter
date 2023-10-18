@@ -78,7 +78,7 @@ const operations: operation[] = [
     fields: { id: "input" },
   },
   {
-    name: "Get Groups (empty for all)",
+    name: "Get Gathering (empty for all)",
     endpoint: "/api/groups",
     method: "GET",
     fields: { id: "input", members: "input" },
@@ -118,6 +118,137 @@ const operations: operation[] = [
     endpoint: "/api/messages/:id",
     method: "PATCH",
     fields: { id: "input", update: { content: "input" } },
+  },
+  {
+    name: "Delete Message",
+    endpoint: "/api/messages/:id",
+    method: "DELETE",
+    fields: { id: "input" },
+  },
+  // Gatherings
+  {
+    name: "Get Gatherings (empty for all)",
+    endpoint: "/api/gatherings",
+    method: "GET",
+    fields: { id: "input", query: { name: "input", members: "input", groups: "input", activity: "input" } },
+  },
+  {
+    name: "Create Gathering",
+    endpoint: "/api/gatherings",
+    method: "POST",
+    fields: { params: { name: "input", members: "input", groups: "input", activity: "input" } },
+  },
+  {
+    name: "Update Gathering",
+    endpoint: "/api/gatherings/:id",
+    method: "PATCH",
+    fields: { id: "input", params: { name: "input", members: "input", groups: "input", activity: "input" } },
+  },
+  {
+    name: "Delete Gathering",
+    endpoint: "/api/gatherings/:id",
+    method: "DELETE",
+    fields: { id: "input" },
+  },
+  // Locations
+  {
+    name: "Get Locations (empty for all)",
+    endpoint: "/api/locations",
+    method: "GET",
+    fields: { coordinates: { longitude: "input", latitude: "input" } },
+  },
+  {
+    name: "Get Nearby Locations",
+    endpoint: "/api/location/:id",
+    method: "GET",
+    fields: { id: "input" },
+  },
+  {
+    name: "Create Location",
+    endpoint: "/api/locations",
+    method: "POST",
+    fields: { coordinates: { longitude: "input", latitude: "input" } },
+  },
+  {
+    name: "Update Location",
+    endpoint: "/api/locations/:id",
+    method: "PATCH",
+    fields: { id: "input", update: { coordinates: { longitude: "input", latitude: "input" } } },
+  },
+  {
+    name: "Delete Location",
+    endpoint: "/api/locations/:id",
+    method: "DELETE",
+    fields: { id: "input" },
+  },
+  // Activities
+  {
+    name: "Get Activities (empty for all)",
+    endpoint: "/api/activities",
+    method: "GET",
+    fields: { query: { name: "input", description: "input", location: "input", date: "input" } },
+  },
+  {
+    name: "Create Activity",
+    endpoint: "/api/activities",
+    method: "POST",
+    fields: { params: { name: "input", description: "input", location: "input", date: "input" } },
+  },
+  {
+    name: "Update Activity",
+    endpoint: "/api/activities/:id",
+    method: "PATCH",
+    fields: { id: "input", update: { name: "input", description: "input", location: "input", date: "input" } },
+  },
+  {
+    name: "Delete Activity",
+    endpoint: "/api/activities/:id",
+    method: "DELETE",
+    fields: { id: "input" },
+  },
+  // Chatrooms
+  {
+    name: "Get Chatrooms (empty for all)",
+    endpoint: "/api/chatrooms",
+    method: "GET",
+    fields: { coordinates: { longitude: "input", latitude: "input" } },
+  },
+  {
+    name: "Create Chatroom",
+    endpoint: "/api/chatrooms",
+    method: "POST",
+    fields: { coordinates: { longitude: "input", latitude: "input" } },
+  },
+  {
+    name: "Update Chatroom",
+    endpoint: "/api/chatrooms/:id",
+    method: "PATCH",
+    fields: { id: "input", update: { coordinates: { longitude: "input", latitude: "input" } } },
+  },
+  {
+    name: "Delete Chatroom",
+    endpoint: "/api/chatrooms/:id",
+    method: "DELETE",
+    fields: { id: "input" },
+  },
+  // Messages
+  {
+    name: "Get Activities (empty for all)",
+    endpoint: "/api/messages",
+    method: "GET",
+    fields: { query: { name: "input", description: "input", location: "input", date: "input" } },
+  },
+  {
+    name: "Create Message",
+    endpoint: "/api/messages",
+    method: "POST",
+    fields: { content: "input" },
+  },
+  {
+    name: "Update Message",
+    endpoint: "/api/messages/:id",
+    method: "PATCH",
+    fields: { id: "input", content: "input" },
   },
   {
     name: "Delete Message",

@@ -6,14 +6,16 @@ export interface ActivityDoc extends BaseDoc {
   name: string;
   description: string;
   location: ObjectId;
+  date: Date;
 }
 
 export default class ActivityConcept {
   public readonly activities = new DocCollection<ActivityDoc>("activities");
 
-  async create(params: ActivityDoc): Promise<void> {
+  async create(params: ActivityDoc): Promise<{ msg: string; activity: ObjectId }> {
     await this.canCreate(params);
-    void this.activities.createOne(params);
+    const activity = await this.activities.createOne(params);
+    return { msg: "Activity successfully created!", activity: activity };
   }
 
   async getActivities(query: Filter<ActivityDoc>): Promise<ActivityDoc[]> {
