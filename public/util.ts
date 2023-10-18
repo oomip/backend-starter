@@ -211,19 +211,19 @@ const operations: operation[] = [
     name: "Get Chatrooms (empty for all)",
     endpoint: "/api/chatrooms",
     method: "GET",
-    fields: { coordinates: { longitude: "input", latitude: "input" } },
+    fields: { query: { group: "input", messages: "input" } },
   },
   {
     name: "Create Chatroom",
     endpoint: "/api/chatrooms",
     method: "POST",
-    fields: { coordinates: { longitude: "input", latitude: "input" } },
+    fields: { params: { group: "input", messages: "input" } },
   },
   {
     name: "Update Chatroom",
     endpoint: "/api/chatrooms/:id",
     method: "PATCH",
-    fields: { id: "input", update: { coordinates: { longitude: "input", latitude: "input" } } },
+    fields: { id: "input", params: { group: "input", messages: "input" } },
   },
   {
     name: "Delete Chatroom",
